@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IOC Analyzer — Live Demo · SOC Home Lab</title>
+<meta name="description" content="Run the CloudTrail IOC analyzer's heuristic detectors in your browser on synthetic demo data.">
+<link rel="canonical" href="https://szzxli.github.io/soc-home-lab/web/demo.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="soc-home-lab">
+<meta property="og:title" content="IOC Analyzer — Live Demo · SOC Home Lab">
+<meta property="og:description" content="Run the CloudTrail IOC analyzer&#x27;s heuristic detectors in your browser on synthetic demo data.">
+<meta property="og:url" content="https://szzxli.github.io/soc-home-lab/web/demo.html">
+<meta property="og:image" content="https://opengraph.githubassets.com/1/szzxli/soc-home-lab">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="IOC Analyzer — Live Demo · SOC Home Lab">
+<meta name="twitter:description" content="Run the CloudTrail IOC analyzer&#x27;s heuristic detectors in your browser on synthetic demo data.">
+<meta name="twitter:image" content="https://opengraph.githubassets.com/1/szzxli/soc-home-lab">
+<link rel="stylesheet" href="css/style.css?v=20261029">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Main">
+<div class="wrap">
+<a class="brand" href="./">soc<span>-home-lab</span></a>
+<ul>
+<li class="opt"><a href="./#labs">Labs</a></li>
+<li><a href="./#kev">KEV hunts</a></li>
+<li><a href="demo.html" aria-current="page">Demo</a></li>
+<li class="opt"><a href="https://github.com/szzxli/soc-home-lab/blob/main/START_HERE.md" data-count="open-start-here">Start here</a></li>
+<li><a href="https://github.com/szzxli/soc-home-lab">GitHub</a></li>
+</ul>
+</div>
+</nav>
+
+<main id="main" class="wrap">
+<header class="page-head">
+<p class="eyebrow">$ ./ioc_analyzer.py --input sample_cloudtrail.json</p>
+<h1>IOC Analyzer <span class="accent">· live demo</span></h1>
+<p class="lead">The three heuristic detectors from <a href="https://github.com/szzxli/soc-home-lab/tree/main/02-python-ioc-analyzer">02-python-ioc-analyzer</a>, running entirely in your browser. No server, no data leaves this page.</p>
+<p class="sub" style="margin:8px 0 0;font-size:14px"><a href="./">← back to all projects</a></p>
+</header>
+
+<div class="card">
+<h2>1 · Input</h2>
+<div class="controls">
+<button class="btn" id="runSample">▶ Run on built-in sample log</button>
+<button class="btn btn-ghost" id="runNoisy">Run on noisy sample (2,870 records)</button>
+<button class="btn btn-ghost" id="runCustom">Run on pasted JSON ↓</button>
+<label>window <input id="winMin" type="number" value="10" min="1"> min</label>
+<label>threshold <input id="bfThresh" type="number" value="5" min="2"> failures</label>
+</div>
+<p class="notice">⚠ <b>Synthetic demo data.</b> The built-in log is fabricated training data (same file shipped with the repo). The <b>noisy sample</b> is also synthetic, but closer to a real day: 2,870 records, benign look-alikes and missing fields. It's scored against its answer key, so you'll see the false positives too (<a href="https://github.com/szzxli/soc-home-lab/blob/main/NOISY_DATA.md">why each one fires</a>). Paste your own CloudTrail JSON to analyze real records. They never leave your browser.</p>
+<label for="customJson" class="sub" style="font-size:14px">Your CloudTrail JSON (optional)</label>
+<textarea id="customJson" placeholder='Paste CloudTrail JSON here — {"Records": [...]} or a bare [...] array — then click "Run on pasted JSON".'></textarea>
+<div class="meta" id="inputInfo" role="status" style="font-size:13px;color:var(--dim);margin-top:8px;"></div>
+</div>
+
+<div class="card">
+<h2>2 · Report</h2>
+<div id="report" aria-live="polite"><p class="sub">No analysis run yet. Click “Run on built-in sample log” above.</p></div>
+</div>
+
+<details>
+<summary>How the detectors work</summary>
+<div class="body">
+<p><span class="badge">unusual_geo</span> Successful <code>ConsoleLogin</code> from an IP outside a tiny built-in table of common ranges — <b>demo heuristic only</b>, a production system should use a real GeoIP database (e.g. MaxMind GeoLite2).</p>
+<p><span class="badge">brute_force</span> ≥ N failed <code>ConsoleLogin</code> attempts from one IP inside a sliding window (default 5 in 10 min) — one finding per IP, earliest window wins.</p>
+<p><span class="badge">suspicious_api</span> Watchlist of high-risk API calls: <code>PutUserPolicy</code>, <code>AttachUserPolicy</code>, <code>AttachRolePolicy</code> (high), <code>CreateAccessKey</code> / <code>RunInstances</code> (medium), <code>DeleteTrail</code> / <code>StopLogging</code> (high).</p>
+<p class="sub">On the noisy sample these rules fire on autoscaling, key rotation, CI deploys, travelling employees and a shared office NAT. That's expected. <a href="https://github.com/szzxli/soc-home-lab/blob/main/NOISY_DATA.md">NOISY_DATA.md</a> explains each false positive and how to tune it.</p>
+<p class="sub">AbuseIPDB enrichment is skipped in this browser build — exactly like the CLI behaves without an <code>ABUSEIPDB_API_KEY</code> set.</p>
+</div>
+</details>
+
+<details>
+<summary>Next step: run it on your machine</summary>
+<div class="body">
+<pre><code>git clone https://github.com/szzxli/soc-home-lab
+cd soc-home-lab/02-python-ioc-analyzer
+pip install -r requirements.txt &amp;&amp; python -m pytest tests/ -v</code></pre>
+<p class="links"><a href="./#kev">→ Then try a KEV hunt pack</a> · <a href="./">← back to all projects</a></p>
+</div>
+</details>
+</main>
+
+<footer>
+<div class="wrap">
+<p>SOC Home Lab · <a href="https://github.com/szzxli/soc-home-lab">github.com/szzxli/soc-home-lab</a> · MIT License</p>
+<p>Privacy: we use <a href="https://www.goatcounter.com" rel="noopener">GoatCounter</a>, a privacy-friendly, cookie-free page-view counter (no personal data, no cookies; its small script loads from gc.zgo.at). Logs you paste into the demo are analyzed in your browser and never leave it.</p>
+</div>
+</footer>
+
+<script>
+const SAMPLE_LOG = {"Records":[{"awsRegion":"us-east-1","eventName":"ConsoleLogin","eventSource":"signin.amazonaws.com","eventTime":"2026-10-10T08:02:11Z","eventType":"AwsConsoleSignIn","eventVersion":"1.08","responseElements":{"ConsoleLogin":"Success"},"sourceIPAddress":"13.52.44.19","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","eventName":"ListBuckets","eventSource":"s3.amazonaws.com","eventTime":"2026-10-10T08:05:40Z","eventVersion":"1.08","requestParameters":null,"sourceIPAddress":"13.52.44.19","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","eventName":"DescribeInstances","eventSource":"ec2.amazonaws.com","eventTime":"2026-10-10T08:11:02Z","eventVersion":"1.08","requestParameters":{"instancesSet":{}},"sourceIPAddress":"13.52.44.19","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","eventName":"GetSessionToken","eventSource":"sts.amazonaws.com","eventTime":"2026-10-10T09:14:55Z","eventVersion":"1.08","requestParameters":{"durationSeconds":3600},"sourceIPAddress":"72.14.9.120","userIdentity":{"principalId":"AIDAEXAMPLEAMIN","type":"IAMUser","userName":"admin-bot"}},{"awsRegion":"us-east-1","eventName":"AssumeRole","eventSource":"sts.amazonaws.com","eventTime":"2026-10-10T09:20:31Z","eventVersion":"1.08","requestParameters":{"roleArn":"arn:aws:iam::123456789012:role/BackupRole"},"sourceIPAddress":"52.95.110.8","userIdentity":{"principalId":"AIDAEXAMPLESVC","type":"IAMUser","userName":"svc-backup"}},{"awsRegion":"us-east-1","eventName":"DescribeVpcs","eventSource":"ec2.amazonaws.com","eventTime":"2026-10-10T09:44:07Z","eventVersion":"1.08","requestParameters":{},"sourceIPAddress":"13.52.44.19","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","eventName":"DescribeSecurityGroups","eventSource":"ec2.amazonaws.com","eventTime":"2026-10-10T10:02:48Z","eventVersion":"1.08","requestParameters":{},"sourceIPAddress":"72.14.9.120","userIdentity":{"principalId":"AIDAEXAMPLEAMIN","type":"IAMUser","userName":"admin-bot"}},{"awsRegion":"us-east-1","eventName":"ConsoleLogin","eventSource":"signin.amazonaws.com","eventTime":"2026-10-10T11:30:19Z","eventType":"AwsConsoleSignIn","eventVersion":"1.08","responseElements":{"ConsoleLogin":"Success"},"sourceIPAddress":"203.0.113.104","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","errorCode":"Failed authentication","eventName":"ConsoleLogin","eventSource":"signin.amazonaws.com","eventTime":"2026-10-10T12:01:03Z","eventType":"AwsConsoleSignIn","eventVersion":"1.08","responseElements":{"ConsoleLogin":"Failure"},"sourceIPAddress":"198.51.100.77","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","errorCode":"Failed authentication","eventName":"ConsoleLogin","eventSource":"signin.amazonaws.com","eventTime":"2026-10-10T12:02:17Z","eventType":"AwsConsoleSignIn","eventVersion":"1.08","responseElements":{"ConsoleLogin":"Failure"},"sourceIPAddress":"198.51.100.77","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","errorCode":"Failed authentication","eventName":"ConsoleLogin","eventSource":"signin.amazonaws.com","eventTime":"2026-10-10T12:03:44Z","eventType":"AwsConsoleSignIn","eventVersion":"1.08","responseElements":{"ConsoleLogin":"Failure"},"sourceIPAddress":"198.51.100.77","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","errorCode":"Failed authentication","eventName":"ConsoleLogin","eventSource":"signin.amazonaws.com","eventTime":"2026-10-10T12:05:09Z","eventType":"AwsConsoleSignIn","eventVersion":"1.08","responseElements":{"ConsoleLogin":"Failure"},"sourceIPAddress":"198.51.100.77","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","errorCode":"Failed authentication","eventName":"ConsoleLogin","eventSource":"signin.amazonaws.com","eventTime":"2026-10-10T12:06:52Z","eventType":"AwsConsoleSignIn","eventVersion":"1.08","responseElements":{"ConsoleLogin":"Failure"},"sourceIPAddress":"198.51.100.77","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","errorCode":"Failed authentication","eventName":"ConsoleLogin","eventSource":"signin.amazonaws.com","eventTime":"2026-10-10T12:08:36Z","eventType":"AwsConsoleSignIn","eventVersion":"1.08","responseElements":{"ConsoleLogin":"Failure"},"sourceIPAddress":"198.51.100.77","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","eventName":"PutUserPolicy","eventSource":"iam.amazonaws.com","eventTime":"2026-10-10T13:22:10Z","eventVersion":"1.08","requestParameters":{"policyName":"PersistPolicy","userName":"svc-backup"},"sourceIPAddress":"203.0.113.104","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","eventName":"AttachUserPolicy","eventSource":"iam.amazonaws.com","eventTime":"2026-10-10T13:25:47Z","eventVersion":"1.08","requestParameters":{"policyArn":"arn:aws:iam::aws:policy/AdministratorAccess","userName":"jdoe"},"sourceIPAddress":"203.0.113.104","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","eventName":"RunInstances","eventSource":"ec2.amazonaws.com","eventTime":"2026-10-10T13:31:55Z","eventVersion":"1.08","requestParameters":{"instancesSet":{"items":[{"imageId":"ami-0123456789abcdef0","instanceType":"c5.4xlarge","maxCount":4,"minCount":4}]}},"sourceIPAddress":"203.0.113.104","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","eventName":"ListBuckets","eventSource":"s3.amazonaws.com","eventTime":"2026-10-10T14:15:22Z","eventVersion":"1.08","requestParameters":null,"sourceIPAddress":"13.52.44.19","userIdentity":{"principalId":"AIDAEXAMPLEJDOE","type":"IAMUser","userName":"jdoe"}},{"awsRegion":"us-east-1","eventName":"DescribeInstances","eventSource":"ec2.amazonaws.com","eventTime":"2026-10-10T15:02:09Z","eventVersion":"1.08","requestParameters":{"instancesSet":{}},"sourceIPAddress":"72.14.9.120","userIdentity":{"principalId":"AIDAEXAMPLEAMIN","type":"IAMUser","userName":"admin-bot"}}],"_comment":"SYNTHETIC TRAINING SAMPLE — NOT REAL LOG DATA. All events, IPs, user names, and timestamps below are fabricated for training/testing the ioc_analyzer.py project. Do not treat as real AWS CloudTrail output."};
+</script>
+<script src="js/ioc.js"></script>
+<script src="js/analytics.js" defer></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const info = $("inputInfo"), report = $("report");
+
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function render(records, findings, label, truth) {
+    const s = iocBuildSummary(records, findings);
+    const sc = truth ? iocScore(findings, truth) : null;
+    let h = "";
+    if (sc) {
+      h += "<div class='score' id='score'>Scored against the answer key: <b class='tp'>" + sc.tp + " true positives</b> · " +
+        "<b class='fp'>" + sc.fp + " false positives</b> · <b class='fn'>" + sc.fn.length + " missed</b>" +
+        (sc.fn.length ? " (" + sc.fn.map(e => esc(e.detector + " on " + (e.ip || e.event)) + (e.note ? " — " + esc(e.note) : "")).join("; ") + ")" : "") +
+        ".<br><span class='sub'>False positives are expected on this sample: the detectors are simple teaching rules. " +
+        "<a href='https://github.com/szzxli/soc-home-lab/blob/main/NOISY_DATA.md'>Why each one fires, and how to tune it →</a></span></div>";
+    }
+    h += "<table class='sum'>";
+    h += "<tr><th>Records analyzed</th><td>" + s.total_records + "</td></tr>";
+    h += "<tr><th>Time range</th><td>" + esc(s.time_range) + "</td></tr>";
+    h += "<tr><th>Unique source IPs</th><td>" + s.unique_source_ips + "</td></tr>";
+    h += "<tr><th>Unique actors</th><td>" + s.unique_actors + "</td></tr>";
+    h += "<tr><th>Total findings</th><td><b>" + s.total_findings + "</b></td></tr>";
+    const rc = Object.keys(s.findings_by_risk).map(k =>
+      "<span class='risk-" + k + "'>" + k + ": " + s.findings_by_risk[k] + "</span>").join(" · ");
+    h += "<tr><th>By risk</th><td>" + (rc || "—") + "</td></tr>";
+    h += "</table>";
+    h += "<p class='sub'>Top events: " + s.top_events.slice(0, 6).map(e => esc(e[0]) + " (" + e[1] + ")").join(", ") + "</p>";
+    if (!findings.length) {
+      h += "<p>No suspicious activity detected by the heuristic detectors.</p>";
+    } else {
+      findings.forEach((f, i) => {
+        h += "<div class='finding " + f.risk + "'>" +
+          "<div><span class='risk-" + f.risk + "'>[" + f.risk.toUpperCase() + "]</span> " +
+          (sc ? "<span class='tag'>" + sc.label(f) + "</span> " : "") +
+          "<b>" + esc(f.detector) + "</b> · " + esc(f.event) + "</div>" +
+          "<div class='meta'>" + esc(f.time) + " · actor " + esc(f.actor) + " · IP " + esc(f.ip) + "</div>" +
+          "<div class='ev'>" + esc(f.evidence) + "</div></div>";
+      });
+    }
+    h += "<p class='sub'>IP enrichment (AbuseIPDB): <b>skipped</b> — not available in the browser build.</p>";
+    report.innerHTML = h;
+    info.textContent = label + ": " + records.length + " records, " + findings.length + " findings.";
+    report.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function runOn(data, label, truth) {
+    let records;
+    try {
+      records = iocParseRecords(typeof data === "string" ? JSON.parse(data) : data);
+    } catch (e) {
+      report.innerHTML = "<p style='color:var(--red)'>Invalid JSON: " + esc(e.message) + "</p>";
+      return;
+    }
+    if (!records.length) {
+      report.innerHTML = "<p style='color:var(--amber)'>No records found. Expect {\"Records\": [...]} or a bare [...] array.</p>";
+      return;
+    }
+    const w = Math.max(1, parseInt($("winMin").value, 10) || 10);
+    const t = Math.max(2, parseInt($("bfThresh").value, 10) || 5);
+    const findings = iocDetectAll(records, w, t);
+    render(records, findings, label, truth);
+  }
+
+  $("runSample").addEventListener("click", () => runOn(SAMPLE_LOG, "Built-in synthetic sample"));
+  const NOISY_URL = "../02-python-ioc-analyzer/sample_data/sample_cloudtrail_noisy.json";
+  const TRUTH_URL = "../02-python-ioc-analyzer/sample_data/sample_cloudtrail_noisy.truth.json";
+  const getJson = u => fetch(u).then(r => { if (!r.ok) throw new Error("HTTP " + r.status + " for " + u); return r.json(); });
+  $("runNoisy").addEventListener("click", () => {
+    report.innerHTML = "<p class='sub'>Loading the noisy sample…</p>";
+    Promise.all([getJson(NOISY_URL), getJson(TRUTH_URL)])
+      .then(([data, truth]) => runOn(data, "Noisy synthetic sample", truth))
+      .catch(e => { report.innerHTML = "<p style='color:var(--red)'>Could not load the noisy sample: " + esc(e.message) +
+        ". It needs the page to be served over http(s), for example on GitHub Pages.</p>"; });
+  });
+  $("runCustom").addEventListener("click", () => {
+    const v = $("customJson").value.trim();
+    if (!v) { report.innerHTML = "<p style='color:var(--amber)'>Paste some JSON first.</p>"; return; }
+    runOn(v, "Pasted JSON");
+  });
+})();
+</script>
+<!-- GoatCounter: privacy-friendly, cookie-free page-view counter (no personal data). -->
+<script>/* GoatCounter loader: test visits are never counted. ?nocount=1 turns counting off in this browser (localStorage skipgc=t, GoatCounter's own flag; ?nocount=0 turns it back on); URLs with v=, cb=, cachebust, _= or nocount are skipped too. */
+(function(w,d,l){var q=l.search,skip=/[?&](v|cb|_|nocount)=|[?&]cachebust/i.test(q);try{var s=w.localStorage;if(/[?&]nocount=1(&|$)/.test(q))s.setItem('skipgc','t');if(/[?&]nocount=0(&|$)/.test(q))s.removeItem('skipgc');if(s.getItem('skipgc')==='t')skip=true}catch(e){}w.gcSkip=skip;if(skip)return;var g=d.createElement('script');g.async=true;g.src='https://gc.zgo.at/count.js';g.setAttribute('data-goatcounter','https://szzxli.goatcounter.com/count');(d.head||d.documentElement).appendChild(g)})(window,document,location);</script>
+</body>
+</html>
